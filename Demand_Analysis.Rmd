@@ -4,6 +4,14 @@ output: html_document
 date: "2024-04-28"
 ---
 
+Install packages
+```{r}
+library(dplyr)
+library(tidyr)
+library(lavaan)
+```
+
+
 Initializing the dataset
 ```{r}
 # Read the data
@@ -23,6 +31,109 @@ head(data)
 #view(data)
 #write.csv(data, "modified_data.csv", row.names = FALSE)
 ```
+
+jasnsak
+```{r}
+# Convert WillingnessToTry, Interest, PerceivedReliability, EnvironmentalConcern, and ComfortWithFlying
+factor_vars <- c("WillingnessToTry", "Interest", "PerceivedReliability", "EnvironmentalConcern", "ComfortWithFlying")
+level_mapping <- c("Extremely unlikely" = -2, "Somewhat unlikely" = -1, "Neutral" = 0, "Somewhat likely" = 1, "Extremely likely" = 2,
+                   "Extremely uninterested" = -2, "Somewhat uninterested" = -1, "Somewhat interested" = 1, "Extremely interested" = 2,
+                   "Extremely unreliable" = -2, "Somewhat unreliable" = -1, "Somewhat reliable" = 1, "Extremely reliable" = 2,
+                   "Not at all important" = -2, "Slightly important" = -1, "Moderately important" = 0, "Very important" = 1, "Extremely important" = 2,
+                   "Extremely uncomfortable" = -2, "Somewhat uncomfortable" = -1, "Neither comfortable nor uncomfortable" = 0, "Somewhat comfortable" = 1, "Extremely comfortable" = 2)
+
+for (var in factor_vars) {
+  encoded_var <- paste0("enc_", var)
+  data[[encoded_var]] <- factor(data[[var]], levels = names(level_mapping), labels = level_mapping)
+}
+
+# Convert FlyingExperience to binary (1 if any experience, 0 if none)
+data$enc_FlyingExperience <- ifelse(data$FlyingExperience == "None of the above", 0, 1)
+
+# Convert AirshowExperience, DemonstrationInterest, and OhioTesting
+binary_vars <- c("AirshowExperience", "DemonstrationInterest", "OhioTesting")
+for (var in binary_vars) {
+  encoded_var <- paste0("enc_", var)
+  data[[encoded_var]] <- factor(data[[var]], levels = c("No", "Maybe", "Yes"), labels = c(-1, 0, 1))
+}
+
+# Convert WillingnessToPay
+data$enc_WillingnessToPay <- factor(data$WillingnessToPay, levels = c("No more than a regular taxi/ride-share", "Up to 25% more", "Up to 50% more", "Up to 100% more (double)", "More than double"),
+                                    labels = c(0, 0.25, 0.5, 1, 2))
+
+# Convert IncomeLevel
+data$enc_IncomeLevel <- factor(data$IncomeLevel, levels = c("Less than $25,000", "$25,000 - $50,000", "$50,001 - $75,000", "$75,001 - $100,000", "$100,001 - $150,000", "Over $150,000"),
+                               labels = c(1, 2, 3, 4, 5, 6))
+
+# Convert AreaType
+data$enc_AreaType <- factor(data$AreaType, levels = c("Rural", "Suburban", "Urban"), labels = c(1, 2, 3))
+
+# Save the modified dataset to a new CSV file
+write.csv(data, "modified_data_encoded.csv", row.names = FALSE)
+```
+
+
+Calculating Demand Latency
+```{r}
+# Load the modified dataset with encoded values
+data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
+
+# Define the SEM model
+model <- '
+  # Latent variable Demand with indicators
+  Demand =~ enc_WillingnessToTry + enc_WillingnessToPay
+  # Regressions on Demand
+  Demand ~ ImportanceOfTimeSavings + ImportanceOfTrafficAvoidance + 
+             ImportanceOfConvenience + ImportanceOfEnvBenefits
+'
+
+# Fit the SEM model
+fit <- sem(model, data = data)
+
+# View the model summary
+summary(fit, fit.measures = TRUE)
+
+# Extract standardized coefficients
+standardized_coef <- parameterEstimates(fit, standardized = TRUE)$std.all
+
+# Print the standardized coefficients
+print(standardized_coef)
+```
+
+```{r}
+
+```
+
+
+
+
+
+Analyzing the Regression Correlation between Interest in Trying + Willingness to Pay and Willingness to Try
+```{r}
+# Load the modified dataset with encoded values
+data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
+
+data_no_na <- na.omit(data)
+
+model <- lm(enc_Interest ~ enc_WillingnessToPay + enc_WillingnessToTry, data = data_no_na)
+
+# View the model summary
+summary(model)
+
+# Extract the coefficients and R-squared
+coefficients <- coef(model)
+r_squared <- summary(model)$r.squared
+
+# Print the coefficients and R-squared
+print(coefficients)
+print(r_squared)
+```
+
+Analyzing SEM Regression Correlation between Interest in Trying + Willingness to Pay and Willingness to Try
+```{r}
+
+```
+
 
 
 
