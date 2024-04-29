@@ -31,13 +31,11 @@ Contains R code for data analysis
 Stores the data used in the analysis (e.g., raw_data/UpdatedSurveyApr29.csv, modified_data_encoded.csv). This folder holds the raw survey data and any processed versions used in the analysis.
 
 **documentation**
-documentation - Holds additional documentation related to the project (e.g., LICENSE). 
+Holds additional documentation related to the project (e.g., LICENSE). 
 
-**plots**
-plots (if applicable) - Contains any visualizations generated from the data analysis (e.g., ggplot2 plots). This folder stores the visual representations of the data and analysis results.
 
 **packages**
-Packages used in the project (e.g., dplyr, tidyr, lavaan, ggplot2). 
+used in the project include: dplyr, tidyr, lavaan, ggplot2; make sure to install packages and call library before running.  
 
 ### Conclusion
 
