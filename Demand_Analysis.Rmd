@@ -1,6 +1,8 @@
 ---
 title: "Demand_Analysis"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 date: "2024-04-28"
 ---
 
@@ -17,10 +19,11 @@ library(scatterplot3d)
 Initializing the dataset
 ```{r}
 # Read the data
-data <- read.csv("raw_data/surveytesttest.csv", skip = 3, header = FALSE, na.strings = c("", " "), stringsAsFactors = FALSE)
+data <- read.csv("raw_data/UpdatedSurveyApr29.csv", skip = 3, header = FALSE, na.strings = c("", " "), stringsAsFactors = FALSE)
 
 # View the modified data
 head(data)
+summary(data)
 ```
 
 Renaming the headers of the dataset for ease of use
@@ -30,6 +33,7 @@ colnames(data) <- c("Familiarity", "WillingnessToTry", "Interest", "FlyingExperi
 
 # View the modified data
 head(data)
+summary(data)
 #view(data)
 #write.csv(data, "modified_data.csv", row.names = FALSE)
 ```
@@ -53,7 +57,7 @@ for (var in factor_vars) {
 data$enc_FlyingExperience <- ifelse(data$FlyingExperience == "None of the above", 0, 1)
 
 # Convert AirshowExperience, DemonstrationInterest, and OhioTesting
-binary_vars <- c("AirshowExperience", "DemonstrationInterest", "OhioTesting")
+binary_vars <- c("Familiarity", "AirshowExperience", "DemonstrationInterest", "OhioTesting")
 for (var in binary_vars) {
   encoded_var <- paste0("enc_", var)
   data[[encoded_var]] <- factor(data[[var]], levels = c("No", "Maybe", "Yes"), labels = c(-1, 0, 1))
@@ -72,6 +76,8 @@ data$enc_AreaType <- factor(data$AreaType, levels = c("Rural", "Suburban", "Urba
 
 # Save the modified dataset to a new CSV file
 write.csv(data, "modified_data_encoded.csv", row.names = FALSE)
+data <- read.csv("modified_data_encoded.csv")
+summary(data)
 ```
 
 
@@ -139,10 +145,10 @@ ggplot(data = data_no_na, aes(x = enc_WillingnessToPay, y = enc_Interest)) +
   theme_bw()  # Apply a theme (optional)
 
 # Create the plot
-ggplot(data = data_no_na, aes(x =enc_Interest , y = enc_WillingnessToTry)) +
+ggplot(data = data_no_na, aes(x =enc_WillingnessToTry , y = enc_Interest)) +
   geom_point(color = "blue") +  # Add points
   geom_smooth(method = "lm", se = TRUE, color = "red") +  # Add regression line
-  labs(x = "Interest", y = "Willingness to Try") +  # Set labels
+  labs(x = "Willingness to Try", y = "Interest") +  # Set labels
   theme_bw()  # Apply a theme (optional)
 
 # Create the plot
@@ -197,62 +203,11 @@ plot_ly(data_no_na, x = ~enc_WillingnessToPay, y = ~enc_WillingnessToTry, z = ~e
                       yaxis = list(title = "Willingness to Try AAM"),
                       zaxis = list(title = "Interest in AAM")))
 
-library(rgl)
 
 # Fit a linear regression model with all three variables
 model_3d <- lm(enc_Interest ~ enc_WillingnessToPay + enc_WillingnessToTry, data = data_no_na)
 
-# Create the 3D scatter plot
-scatterplot3d(data$enc_WillingnessToPay, data$enc_WillingnessToTry, data$enc_Interest,
-              pch = 16, color = "blue",
-              xlab = "Willingness to Pay More", ylab = "Willingness to Try AAM", zlab = "Interest in AAM")
-
-
-# Remove rows with missing values
-data <- data_no_na <- na.omit(data) 
-
-# Generate coordinates for the fitted plane
-x_grid <- seq(min(data$enc_WillingnessToPay), max(data$enc_WillingnessToPay), length.out = 10)
-y_grid <- seq(min(data$enc_WillingnessToTry), max(data$enc_WillingnessToTry), length.out = 10)
-plane_grid <- expand.grid(x_grid, y_grid)
-names(plane_grid) <- c("enc_WillingnessToPay", "enc_WillingnessToTry")
-plane_grid$enc_Interest <- predict(model_3d, newdata = plane_grid)
-
-# Add the fitted plane to the plot
-surf3d(x_grid, y_grid, plane_grid$enc_Interest, alpha = 0.5, col = "grey")
-```
-
-
-MIDPOINNNNNNNT
-```{r}
-#Plot the coefficient 
-1
-# Plot relationship between willingness to pay and interest
-plot(data$enc_WillingnessToPay, data$enc_Interest, 
-     xlab = "Willingness to Pay More", ylab = "Interest in AAM")
-abline(model, col = "red")
-
-# Plot relationship between willingness to try and interest
-plot(data$enc_WillingnessToTry, data$enc_Interest, 
-     xlab = "Willingness to Try AAM", ylab = "Interest in AAM")
-abline(model, col = "blue")
-
-
-2
-# Install and load the scatterplot3d package
-# Create a 3D scatter plot
-scatterplot3d(data$enc_WillingnessToPay, data$enc_WillingnessToTry, data$enc_Interest,
-              pch = 16, color = "blue",
-              xlab = "Willingness to Pay More", ylab = "Willingness to Try AAM", zlab = "Interest in AAM")
-
-# Add regression plane (optional, requires additional calculations)
-# ...
-
-```
-
-
-Analyzing the Regression Correlation for Public Acceptance
-```{r}
+#Analyzing the Regression Correlation for Public Acceptance
 # Load the modified dataset with encoded values
 data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
 
@@ -273,181 +228,65 @@ print(r_squared)
 ```
 
 
-Analyzing the Regression Correlation between Interest in Trying + Willingness to Try
+
+
+Time Savings v. Traffic Avoidance v. Convenience v. Environmental Benefits
 ```{r}
-# Load the modified dataset with encoded values
-data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
-
-data_no_na <- na.omit(data)
-
-model <- lm(enc_Interest ~ enc_WillingnessToTry, data = data_no_na)
-
-# View the model summary
-summary(model)
-
-# Extract the coefficients and R-squared
-coefficients <- coef(model)
-r_squared <- summary(model)$r.squared
-
-# Print the coefficients and R-squared
-print(coefficients)
-print(r_squared)
-plot(model)
-
-# Create the plot
-ggplot(data = data_no_na, aes(x = enc_WillingnessToPay, y = enc_Interest)) +
-  geom_point(color = "blue") +  # Add points
-  geom_smooth(method = "lm", se = TRUE, color = "red") +  # Add regression line
-  labs(x = "Willingness to Pay More", y = "Interest in AAM") +  # Set labels
-  theme_bw()  # Apply a theme (optional)
-
-```
-
-
-Analyzing the Regression Correlation between Willingness to Pay and Willingness to Try
-```{r}
-# Load the modified dataset with encoded values
-data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
-
-data_no_na <- na.omit(data)
-
-model <- lm(enc_Interest ~ enc_WillingnessToPay + enc_WillingnessToTry, data = data_no_na)
-
-# View the model summary
-summary(model)
-
-# Extract the coefficients and R-squared
-coefficients <- coef(model)
-r_squared <- summary(model)$r.squared
-
-# Print the coefficients and R-squared
-print(coefficients)
-print(r_squared)
-```
-
-
-
-Convience v. Everything Else
-```{r}
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-
-# Reshape data to long format with category and rank columns
-data_long <- data %>%
-  pivot_longer(cols = starts_with("ImportanceOf"),
-               names_to = "category",
-               values_to = "rank")
-
-# Option 1: Bar Chart with Ranked Order
-
-# Calculate average rankings and order
-ranked_data <- data_long %>%
-  group_by(category) %>%
-  summarize(average_rank = mean(rank)) %>%
-  arrange(desc(average_rank))
-
-# Create bar chart
-ggplot(ranked_data, aes(x = reorder(category, -average_rank), y = average_rank)) +
-  geom_bar(stat = "identity", fill = "skyblue") +
-  labs(x = "", y = "Average Rank", title = "Ranking of AAM Benefits") +
-  theme_bw() +
-  coord_flip()  # Flip coordinates for better readability
-
-# Option 2: Diverging Stacked Bar Chart
-
-# Calculate percentages of each rank
-ranked_percentage <- data_long %>%
-  group_by(category, rank) %>%
-  summarize(percentage = n() / nrow(data_long)) %>%
-  mutate(rank = factor(rank, levels = 4:1))  # Order ranks from highest to lowest
-
-# Create diverging stacked bar chart
-ggplot(ranked_percentage, aes(x = category, y = percentage, fill = rank)) +
-  geom_bar(stat = "identity") +
-  labs(x = "", y = "Percentage of Respondents", title = "Distribution of AAM Benefit Rankings") +
-  theme_bw() +
-  scale_fill_brewer(palette = "RdYlBu")  # Use diverging color palette
-
-
-
-# ... (data reshaping code remains the same)
-
-# Option 1: Bar Chart with Ranked Order (Flipped)
-
-# Calculate average rankings and order
-ranked_data <- data_long %>%
-  group_by(category) %>%
-  summarize(average_rank = mean(rank)) %>%
-  arrange(desc(average_rank))
-
-# Create bar chart with flipped coordinates
-ggplot(ranked_data, aes(x = average_rank, y = reorder(category, average_rank), fill = category)) +
-  geom_bar(stat = "identity") +
-  labs(x = "Average Rank", y = "", title = "Ranking of AAM Benefits") +
-  theme_bw() 
-
-# Option 2: Diverging Stacked Bar Chart (Flipped)
-
-# Calculate percentages of each rank
-ranked_percentage <- data_long %>%
-  group_by(category, rank) %>%
-  summarize(percentage = n() / nrow(data_long)) %>%
-  mutate(rank = factor(rank, levels = 4:1))  # Order ranks from highest to lowest
-
-# Create diverging stacked bar chart with flipped coordinates
-ggplot(ranked_percentage, aes(x = rank, y = percentage, fill = category)) +
-  geom_bar(stat = "identity") +
-  labs(x = "Rank", y = "Percentage of Respondents", title = "Distribution of AAM Benefit Rankings") +
-  theme_bw() +
-  scale_fill_brewer(palette = "RdYlBu")  # Use diverging color palette
-
-
-# Install and load the required packages
-library(ggplot2)
-library(dplyr)
-
-# Load the modified dataset with encoded values
-data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
-
-# Create a new dataset with only the top-ranked factor for each respondent
-data_top_rank <- data %>%
-  mutate(TopRank = case_when(
-    ImportanceOfTimeSavings == 1 ~ "Time Savings",
-    ImportanceOfTrafficAvoidance == 1 ~ "Traffic Avoidance",
-    ImportanceOfConvenience == 1 ~ "Convenience",
-    ImportanceOfEnvBenefits == 1 ~ "Environmental Benefits",
-    TRUE ~ NA_character_
-  )) %>%
-  filter(!is.na(TopRank))
-
-# Count the number of respondents for each top-ranked factor
-data_top_rank_count <- data_top_rank %>%
-  count(TopRank)
-
-# Create a bar chart of the top-ranked factors
-ggplot(data_top_rank_count, aes(x = TopRank, y = n)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  labs(x = "Factor", y = "Number of Respondents",
-       title = "Distribution of Top-Ranked Factors") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-# ... (data reshaping and filtering code remains the same)
-
 # Calculate counts and percentages
-top_ranked_summary <- top_ranked_data %>%
+top_ranked_summary <- data_long %>%
+  filter(rank == 1) %>%
+  na.omit() %>%
   group_by(category) %>%
   summarize(count = n()) %>%
-  mutate(percentage = count / sum(count) * 100) %>%  # Calculate percentage
-  arrange(percentage)  # Order by percentage
+  mutate(percentage = count / sum(count) * 100) %>%
+  arrange(desc(percentage)) %>%
+  mutate(category = recode(category, 
+                           ImportanceOfConvenience = "Convenience",
+                           ImportanceOfEnvBenefits = "Environmental Benefits",
+                           ImportanceOfTimeSavings = "Time Savings",
+                           ImportanceOfTrafficAvoidance = "Traffic Avoidance"))  # Rename categories
 
-# Create bar chart with desired style
-ggplot(top_ranked_summary, aes(x = reorder(category, percentage), y = percentage)) +
-  geom_bar(stat = "identity", fill = "steelblue") +  # Change fill color
+# Create bar chart with renamed x-axis labels
+ggplot(top_ranked_summary, aes(x = reorder(category, -percentage), y = percentage)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
   labs(x = "Factor", y = "Percentage of Respondents", 
-       title = "Distribution of Top-Ranked Factors") +  # Adjust labels and title
+       title = "Distribution of Top-Ranked Factors") +
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+summary(data)
+```
+
+
+Creating a Demand Score
+```{r}
+# Load the data (assuming your data is in 'modified_data_encoded.csv')
+data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
+
+# Standardize relevant variables
+data_scaled <- data %>%
+  mutate(across(c(enc_Familiarity, enc_PerceivedReliability, enc_ComfortWithFlying, 
+                  enc_WillingnessToTry, enc_WillingnessToPay, enc_Interest), scale))
+
+# Select variables for PCA
+demand_vars <- data_scaled %>%
+  select(enc_WillingnessToTry, enc_WillingnessToPay, enc_Interest)
+
+# Perform PCA
+pca_result <- prcomp(demand_vars, scale = TRUE)
+
+# Extract first principal component
+demand_scores <- pca_result$x[, 1]
+
+# Add Demand Score to the data
+data_scaled$DemandScore <- demand_scores
+
+# ... (further analysis and visualization)
+
+```
+
+
+Creating an Acceptance Score
+```{r}
+
 ```
 

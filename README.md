@@ -1,5 +1,52 @@
-# FlyingCarDemandAnalysis
+## FlyingCarDemandAnalysis
 
-Abstract
+This project investigates the crucial role of consumer demand in the successful mainstream adoption of Advanced Air Mobility (AAM) technologies.
 
-While public acceptance is often discussed for Advanced Air Mobility (AAM) technologies, this study emphasizes the crucial role of driving actual consumer demand to enable successful mainstream adoption as part of the 4th Industrial Revolution. Despite public awareness and ndustry enthusiasm, there is a stark lack of consumer demand for AAM, which could severely hinder implementation and integration into daily life. The study's rationale is to understand the impact of this public indifference and explore how to elevate engagement with AAM. The objectives are to analyze current public perceptions, assess potential demand drivers, and identify conditions that could influence future demand. Through an international survey, the study explored familiarity with AAM, willingness to pay, expectations from the technology, and prioritization of factors such as emissions, convenience, and cost. The findings provide valuable insights into the public's mindset and highlight the importance of connecting AAM's benefits to their daily lives. The impact of this research is far-reaching, as it proposes a well-researched strategy to transform the industry's insular approach into a public-inclusive journey, fostering informed interest and creating a balanced demand that parallels the industry's supply. By aligning public acceptance with technological advancements, this study paves the way for the successful mainstream adoption of AAM.
+### Introduction
+
+While public acceptance of AAM is a common topic, this study emphasizes the critical need for driving actual consumer demand. Despite public awareness and industry enthusiasm, a significant gap exists in consumer demand for AAM. This gap poses a major hurdle to implementing and integrating AAM into daily life.
+
+### Current Level of Research
+
+The current research focuses on understanding public perception of AAM technologies. An international survey was conducted to assess factors influencing potential demand. This survey explored:
+
+* Familiarity with AAM
+* Interest in AAM
+* Willingness to pay for AAM services
+* Willingness to try for AAM services
+* Expectations for AAM technology
+* Prioritization of factors like emissions, convenience, and cost
+
+
+### Getting Started
+
+To delve deeper into the project's findings, you can explore the `Demand_Analysis.html` or `Demand_Analysis.md` file (depending on the format used). This file details the results of the survey and analysis.
+
+### Additional Info
+
+**code**
+Contains R code for data analysis
+
+**data**
+Stores the data used in the analysis (e.g., raw_data/UpdatedSurveyApr29.csv, modified_data_encoded.csv). This folder holds the raw survey data and any processed versions used in the analysis.
+
+**documentation**
+documentation - Holds additional documentation related to the project (e.g., LICENSE). 
+
+**plots**
+plots (if applicable) - Contains any visualizations generated from the data analysis (e.g., ggplot2 plots). This folder stores the visual representations of the data and analysis results.
+
+**packages**
+Packages used in the project (e.g., dplyr, tidyr, lavaan, ggplot2). 
+
+### Conclusion
+
+This project highlights the importance of understanding public demand alongside technological advancements for the successful mainstream adoption of AAM. By bridging the gap between public perception and industry efforts, we can pave the way for a future where AAM plays a more integrated role in daily life.
+
+**Key Findings (Coming Soon)**
+
+In this section... 
+
+**Next Steps (Coming Soon)**
+
+In this section... 
