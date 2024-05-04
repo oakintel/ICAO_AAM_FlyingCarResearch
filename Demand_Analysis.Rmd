@@ -13,6 +13,7 @@ library(tidyr)
 library(lavaan)
 library(ggplot2)
 library(scatterplot3d)
+library(plotly)
 ```
 
 
@@ -38,7 +39,7 @@ summary(data)
 #write.csv(data, "modified_data.csv", row.names = FALSE)
 ```
 
-jasnsak
+Converting Variables to Factors for Parsing
 ```{r}
 # Convert WillingnessToTry, Interest, PerceivedReliability, EnvironmentalConcern, and ComfortWithFlying
 factor_vars <- c("WillingnessToTry", "Interest", "PerceivedReliability", "EnvironmentalConcern", "ComfortWithFlying")
@@ -81,42 +82,9 @@ summary(data)
 ```
 
 
-Calculating Demand Latency
-```{r}
-# Load the modified dataset with encoded values
-data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
-
-# Define the SEM model
-model <- '
-  # Latent variable Demand with indicators
-  Demand =~ enc_WillingnessToTry + enc_WillingnessToPay
-  # Regressions on Demand
-  Demand ~ ImportanceOfTimeSavings + ImportanceOfTrafficAvoidance + 
-             ImportanceOfConvenience + ImportanceOfEnvBenefits
-'
-
-# Fit the SEM model
-fit <- sem(model, data = data)
-
-# View the model summary
-summary(fit, fit.measures = TRUE)
-
-# Extract standardized coefficients
-standardized_coef <- parameterEstimates(fit, standardized = TRUE)$std.all
-
-# Print the standardized coefficients
-print(standardized_coef)
-```
-
-```{r}
-
-```
 
 
-
-
-
-Analyzing the Regression Correlation between Interest in Trying + Willingness to Pay and Willingness to Try
+Analyzing the Regression Correlation between demand factors: Interest in Trying + Willingness to Pay and Willingness to Try
 ```{r}
 # Load the modified dataset with encoded values
 data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
@@ -124,9 +92,6 @@ data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
 data_no_na <- na.omit(data)
 
 model <- lm(enc_Interest ~ enc_WillingnessToPay + enc_WillingnessToTry, data = data_no_na)
-
-# View the model summary
-summary(model)
 
 # Extract the coefficients and R-squared
 coefficients <- coef(model)
@@ -136,19 +101,36 @@ r_squared <- summary(model)$r.squared
 print(coefficients)
 print(r_squared)
 
-3
+
+# Residual plots
+par(mfrow = c(2, 2))
+plot(model, which = c(1, 2))
+
+# Histogram of residuals
+hist(model$residuals)
+
+# QQ plot of residuals
+qqnorm(model$residuals)
+qqline(model$residuals)
+
+# ANOVA table
+anova(model)
+
+# R-squared
+summary(model)$r.squared
+
 # Create the plot
 ggplot(data = data_no_na, aes(x = enc_WillingnessToPay, y = enc_Interest)) +
   geom_point(color = "blue") +  # Add points
-  geom_smooth(method = "lm", se = TRUE, color = "red") +  # Add regression line
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Add regression line
   labs(x = "Willingness to Pay More", y = "Interest in AAM") +  # Set labels
   theme_bw()  # Apply a theme (optional)
 
 # Create the plot
 ggplot(data = data_no_na, aes(x =enc_WillingnessToTry , y = enc_Interest)) +
   geom_point(color = "blue") +  # Add points
-  geom_smooth(method = "lm", se = TRUE, color = "red") +  # Add regression line
-  labs(x = "Willingness to Try", y = "Interest") +  # Set labels
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Add regression line
+  labs(x = "Willingness to Try", y = "Interest in AAM") +  # Set labels
   theme_bw()  # Apply a theme (optional)
 
 # Create the plot
@@ -158,50 +140,9 @@ ggplot(data = data_no_na, aes(x = enc_WillingnessToPay, y = enc_WillingnessToTry
   labs(x = "Willingness to Pay", y = "Willingness to Try") +  # Set labels
   theme_bw()  # Apply a theme (optional)
 
-# Create a 3D scatter plot
-scatterplot3d(data$enc_WillingnessToPay, data$enc_WillingnessToTry, data$enc_Interest,
-              pch = 1, color = "blue",
-              xlab = "Willingness to Pay More", ylab = "Willingness to Try AAM", zlab = "Interest in AAM")
 
-
-
-ggplot(data, aes(x = enc_WillingnessToPay, y = enc_WillingnessToTry, size = enc_Interest, color = enc_Interest)) +
-  geom_point(alpha = 0.7) +  # Adjust transparency for better visibility
-  scale_size(range = c(2, 8)) +  # Control the size range of the points
-  scale_color_gradient(low = "blue", high = "red") +  # Set color gradient
-  labs(x = "Willingness to Pay More", y = "Willingness to Try AAM",
-       size = "Interest in AAM", color = "Interest in AAM") +
-  theme_bw()
-
-ggplot(data, aes(x = enc_WillingnessToPay, y = enc_WillingnessToTry)) +
-  geom_bin2d(bins = 10) +  # Create a 2D binning for density estimation
-  scale_fill_gradient(low = "white", high = "blue") +  # Set color gradient
-  geom_density2d(color = "black") +  # Add contour lines
-  labs(x = "Willingness to Pay More", y = "Willingness to Try AAM") +
-  theme_bw()
 
 library(plotly)
-
-# Create 3D scatter plot
-plot_ly(data_no_na, x = ~enc_WillingnessToPay, y = ~enc_WillingnessToTry, z = ~enc_Interest,
-        type = "scatter3d", mode = "markers",
-        marker = list(size = 4, color = "blue")) %>%
-  layout(scene = list(xaxis = list(title = "Willingness to Pay More"),
-                      yaxis = list(title = "Willingness to Try AAM"),
-                      zaxis = list(title = "Interest in AAM")))
-
-# Adding a plane is more complex and requires additional calculations 
-# and manipulation of 3D mesh objects. 
-
-library(plotly)
-
-plot_ly(data_no_na, x = ~enc_WillingnessToPay, y = ~enc_WillingnessToTry, z = ~enc_Interest,
-        type = "scatter3d", mode = "markers",
-        marker = list(size = ~enc_Interest * 3,  # Scale size based on interest
-                      color = ~enc_Interest, colorscale = "Viridis", showscale = TRUE)) %>%  # Set color gradient
-  layout(scene = list(xaxis = list(title = "Willingness to Pay More"),
-                      yaxis = list(title = "Willingness to Try AAM"),
-                      zaxis = list(title = "Interest in AAM")))
 
 
 # Fit a linear regression model with all three variables
@@ -213,10 +154,12 @@ data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
 
 data_no_na <- na.omit(data)
 
-model <- lm(enc_Interest ~ enc_WillingnessToPay, data = data_no_na)
+model <- lm(enc_Interest ~ enc_WillingnessToTry, data = data_no_na)
 
 # View the model summary
 summary(model)
+summary(model)$sigma #Standard Error of the Model
+summary(model)$r.squared
 
 # Extract the coefficients and R-squared
 coefficients <- coef(model)
@@ -225,6 +168,168 @@ r_squared <- summary(model)$r.squared
 # Print the coefficients and R-squared
 print(coefficients)
 print(r_squared)
+
+```
+
+
+Analyzing the Regression Correlation between acceptance factors: Interest in Trying + Willingness to Pay and Willingness to Try
+```{r}
+# Load the modified dataset with encoded values
+data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
+data_no_na <- na.omit(data)
+
+# Fit the regression model
+model <- lm(enc_ComfortWithFlying ~ enc_Familiarity + enc_PerceivedReliability, data = data_no_na)
+
+# View the model summary
+summary(model)
+
+# Standard Error of the Model
+summary(model)$sigma
+
+# Residual plots
+par(mfrow = c(2, 2))
+plot(model, which = c(1, 2))
+
+# Histogram of residuals
+hist(model$residuals)
+
+# QQ plot of residuals
+qqnorm(model$residuals)
+qqline(model$residuals)
+
+# ANOVA table
+anova(model)
+
+# R-squared
+summary(model)$r.squared
+
+# Extract the coefficients and R-squared
+coefficients <- coef(model)
+r_squared <- summary(model)$r.squared
+
+# Print the coefficients and R-squared
+print(coefficients)
+print(r_squared)
+
+# Create scatter plots with regression lines
+ggplot(data = data_no_na, aes(x = enc_Familiarity, y = enc_ComfortWithFlying)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FLASE, color = "red") +
+  labs(x = "Familiarity", y = "Comfort with Flying") +
+  theme_bw()
+
+ggplot(data = data_no_na, aes(x = enc_PerceivedReliability, y = enc_ComfortWithFlying)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(x = "Perceived Reliability", y = "Comfort with Flying") +
+  theme_bw()
+
+# 3D scatter plot
+library(plotly)
+
+# Fit a linear regression model with all three variables
+model_3d <- lm(enc_ComfortWithFlying ~ enc_Familiarity + enc_PerceivedReliability, data = data_no_na)
+
+# Create a 3D scatter plot with the regression plane
+fig <- plot_ly(data_no_na, x = ~enc_Familiarity, y = ~enc_PerceivedReliability, z = ~enc_ComfortWithFlying,
+               marker = list(color = ~enc_ComfortWithFlying, colorscale = "Viridis"))
+
+fig <- fig %>% add_markers()
+
+fig <- fig %>% add_surface(x = ~enc_Familiarity, y = ~enc_PerceivedReliability, z = ~fitted(model_3d),
+                           opacity = 0.5, colorscale = "Viridis")
+
+fig <- fig %>% layout(scene = list(xaxis = list(title = "Familiarity"),
+                                   yaxis = list(title = "Perceived Reliability"),
+                                   zaxis = list(title = "Comfort with Flying")))
+
+
+# Plot perceived reliability vs. familiarity
+ggplot(data = data_no_na, aes(x = enc_Familiarity, y = enc_PerceivedReliability)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(x = "Familiarity", y = "Perceived Reliability") +
+  theme_bw()
+
+```
+Creating the Demand & Acceptance Score
+```{r}
+# Load the modified dataset with encoded values
+data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
+data_no_na <- na.omit(data)
+
+# Calculate Demand Score using PCA
+demand_vars <- data_no_na[, c("enc_WillingnessToTry", "enc_WillingnessToPay", "enc_Interest")]
+pca_demand <- prcomp(demand_vars, scale = TRUE)
+data_no_na$DemandScore <- pca_demand$x[, 1]
+
+
+# Calculate Acceptance Score using PCA
+acceptance_vars <- data_no_na[, c("enc_Familiarity", "enc_PerceivedReliability", "enc_ComfortWithFlying")]
+pca_acceptance <- prcomp(acceptance_vars, scale = TRUE)
+data_no_na$AcceptanceScore <- pca_acceptance$x[, 1]
+
+# Compare average scores
+avg_demand_score <- mean(data_no_na$DemandScore)
+avg_acceptance_score <- mean(data_no_na$AcceptanceScore)
+print(paste("Average Demand Score:", avg_demand_score))
+print(paste("Average Acceptance Score:", avg_acceptance_score))
+
+# Calculate correlation between Demand Score and Acceptance Score
+correlation <- cor(data_no_na$DemandScore, data_no_na$AcceptanceScore)
+print(paste("Correlation between Demand Score and Acceptance Score:", correlation))
+
+# Create a scatterplot
+ggplot(data = data_no_na, aes(x = DemandScore, y = AcceptanceScore)) +
+  geom_point(color = "blue") +
+  labs(x = "Demand Score", y = "Acceptance Score") +
+  theme_bw()
+
+library(ggplot2)
+
+ggplot(data_no_na, aes(x = DemandScore, y = AcceptanceScore)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(x = "Demand Score", y = "Acceptance Score") +
+  theme_minimal() +
+  theme(plot.margin = margin(20, 20, 20, 20)) +
+  geom_histogram(data = data_no_na, aes(x = DemandScore, y = ..density..), binwidth = 0.5,
+                 fill = "blue", alpha = 0.6, position = "identity") +
+  geom_histogram(data = data_no_na, aes(x = ..density.., y = AcceptanceScore), binwidth = 0.5,
+                 fill = "green", alpha = 0.6, position = "identity") +
+  coord_flip(xlim = c(-4, 4), ylim = c(-4, 4))
+
+#Correlation Analysis
+cor_coef <- cor(data_no_na$DemandScore, data_no_na$AcceptanceScore)
+print(paste("Correlation Coefficient:", cor_coef))
+#Output:
+#[1] "Correlation Coefficient: 0.652989042712076"
+#The correlation coefficient of 0.65 indicates a moderately strong positive correlation between the Demand Score and Acceptance Score. This suggests that as one score increases, the other tends to increase as well.
+
+#Distribution Analysis 
+par(mfrow = c(1, 2))
+hist(data_no_na$DemandScore, main = "Distribution of Demand Score", xlab = "Demand Score")
+hist(data_no_na$AcceptanceScore, main = "Distribution of Acceptance Score", xlab = "Acceptance Score")
+#The histograms provide a visual representation of the distribution of each score. From the plots, we can observe that both scores appear to have a relatively normal distribution, with no extreme skewness or outliers.
+
+
+#Mean and Variability
+demand_mean <- mean(data_no_na$DemandScore)
+demand_sd <- sd(data_no_na$DemandScore)
+acceptance_mean <- mean(data_no_na$AcceptanceScore)
+acceptance_sd <- sd(data_no_na$AcceptanceScore)
+
+print(paste("Demand Score - Mean:", demand_mean, "| Standard Deviation:", demand_sd))
+print(paste("Acceptance Score - Mean:", acceptance_mean, "| Standard Deviation:", acceptance_sd))
+#Output:
+#[1] "Demand Score - Mean: -0.143817453978833 | Standard Deviation: 1.41087252227541"
+#[1] "Acceptance Score - Mean: -1.21932819031339 | Standard Deviation: 1.44841724882392"
+#The Demand Score has a slightly higher mean (-0.14) compared to the Acceptance Score (-1.22), indicating a relatively higher level of demand. The standard deviations of both scores are similar, suggesting comparable variability.
+
+#Practically, the specific goals and priorities of the AAM industry should guide the emphasis placed on each score. If the focus is on quick market penetration and capturing early adopters, the Demand Score may be more relevant. However, if the aim is to build trust and ensure long-term viability, the Acceptance Score may be more critical.
+#Based on the analyses conducted, both the Demand Score and Acceptance Score appear to be valuable measures, with a moderately strong positive correlation between them. The choice of which score to prioritize depends on the specific objectives and strategies of the AAM industry.
+
 ```
 
 
@@ -233,6 +338,12 @@ print(r_squared)
 Time Savings v. Traffic Avoidance v. Convenience v. Environmental Benefits
 ```{r}
 # Calculate counts and percentages
+
+data_long <- data %>%
+  pivot_longer(cols = starts_with("ImportanceOf"),
+               names_to = "category",
+               values_to = "rank") 
+
 top_ranked_summary <- data_long %>%
   filter(rank == 1) %>%
   na.omit() %>%
@@ -257,36 +368,49 @@ summary(data)
 ```
 
 
-Creating a Demand Score
+Creating an Demand and Acceptance Score comparison with Demographics
 ```{r}
-# Load the data (assuming your data is in 'modified_data_encoded.csv')
-data <- read.csv("modified_data_encoded.csv", stringsAsFactors = FALSE)
-
-# Standardize relevant variables
+# Standardize relevant variables (excluding importance rankings)
 data_scaled <- data %>%
-  mutate(across(c(enc_Familiarity, enc_PerceivedReliability, enc_ComfortWithFlying, 
-                  enc_WillingnessToTry, enc_WillingnessToPay, enc_Interest), scale))
+  mutate(across(c(enc_Familiarity, enc_PerceivedReliability, enc_ComfortWithFlying, enc_WillingnessToTry, enc_WillingnessToPay, enc_Interest), scale))
 
-# Select variables for PCA
+# Remove rows with NAs before calculating scores
+data_scaled <- na.omit(data_scaled)
+
+# Calculate Demand Score using PCA
 demand_vars <- data_scaled %>%
   select(enc_WillingnessToTry, enc_WillingnessToPay, enc_Interest)
+pca_demand <- prcomp(demand_vars, scale = TRUE)
+data_scaled$DemandScore <- pca_demand$x[, 1]
 
-# Perform PCA
-pca_result <- prcomp(demand_vars, scale = TRUE)
+# Calculate Acceptance Score using PCA
+acceptance_vars <- data_scaled %>%
+  select(enc_Familiarity, enc_PerceivedReliability, enc_EnvironmentalConcern, enc_ComfortWithFlying)
+pca_acceptance <- prcomp(acceptance_vars, scale = TRUE)
+data_scaled$AcceptanceScore <- pca_acceptance$x[, 1]
 
-# Extract first principal component
-demand_scores <- pca_result$x[, 1]
+# Standardize Demand and Acceptance Scores
+data_scaled <- data_scaled %>%
+  mutate(StandardizedDemandScore = scale(DemandScore),
+         StandardizedAcceptanceScore = scale(AcceptanceScore))
 
-# Add Demand Score to the data
-data_scaled$DemandScore <- demand_scores
+# Plot Demand vs Acceptance with color-coding by age group
+ggplot(data_scaled, aes(x = StandardizedDemandScore, y = StandardizedAcceptanceScore)) +
+  geom_point(aes(color = AgeGroup), alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(x = "Standardized Demand Score", y = "Standardized Acceptance Score",
+       title = "Demand vs Acceptance for AAM") +
+  scale_color_viridis_d() +
+  theme_minimal()
 
-# ... (further analysis and visualization)
+# Calculate correlation between Demand and Acceptance
+correlation <- cor(data_scaled$StandardizedDemandScore, data_scaled$StandardizedAcceptanceScore)
+print(paste("Correlation between Demand and Acceptance:", correlation))
 
-```
-
-
-Creating an Acceptance Score
-```{r}
+# Regression model to predict Acceptance based on Demand and other factors
+model <- lm(StandardizedAcceptanceScore ~ StandardizedDemandScore + enc_IncomeLevel + enc_AreaType,
+            data = data_scaled)
+summary(model)
 
 ```
 
