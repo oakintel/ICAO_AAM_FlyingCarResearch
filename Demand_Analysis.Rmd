@@ -14,6 +14,7 @@ library(lavaan)
 library(ggplot2)
 library(scatterplot3d)
 library(plotly)
+library(gridExtra)
 ```
 
 
@@ -215,7 +216,7 @@ print(r_squared)
 # Create scatter plots with regression lines
 ggplot(data = data_no_na, aes(x = enc_Familiarity, y = enc_ComfortWithFlying)) +
   geom_point(color = "blue") +
-  geom_smooth(method = "lm", se = FLASE, color = "red") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
   labs(x = "Familiarity", y = "Comfort with Flying") +
   theme_bw()
 
@@ -370,47 +371,114 @@ summary(data)
 
 Creating an Demand and Acceptance Score comparison with Demographics
 ```{r}
-# Standardize relevant variables (excluding importance rankings)
-data_scaled <- data %>%
-  mutate(across(c(enc_Familiarity, enc_PerceivedReliability, enc_ComfortWithFlying, enc_WillingnessToTry, enc_WillingnessToPay, enc_Interest), scale))
 
-# Remove rows with NAs before calculating scores
-data_scaled <- na.omit(data_scaled)
+# Calculate mean demand and acceptance scores for each age group
+age_scores <- data_scaled %>%
+  group_by(AgeGroup) %>%
+  summarise(MeanDemandScore = mean(DemandScore, na.rm = TRUE),
+            MeanAcceptanceScore = mean(AcceptanceScore, na.rm = TRUE))
 
-# Calculate Demand Score using PCA
-demand_vars <- data_scaled %>%
-  select(enc_WillingnessToTry, enc_WillingnessToPay, enc_Interest)
-pca_demand <- prcomp(demand_vars, scale = TRUE)
-data_scaled$DemandScore <- pca_demand$x[, 1]
+# Create bar plot for age group vs. demand score
+age_demand_plot <- ggplot(age_scores, aes(x = AgeGroup, y = MeanDemandScore)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Age Group", y = "Mean Demand Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-# Calculate Acceptance Score using PCA
-acceptance_vars <- data_scaled %>%
-  select(enc_Familiarity, enc_PerceivedReliability, enc_EnvironmentalConcern, enc_ComfortWithFlying)
-pca_acceptance <- prcomp(acceptance_vars, scale = TRUE)
-data_scaled$AcceptanceScore <- pca_acceptance$x[, 1]
+# Create bar plot for age group vs. acceptance score
+age_acceptance_plot <- ggplot(age_scores, aes(x = AgeGroup, y = MeanAcceptanceScore)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Age Group", y = "Mean Acceptance Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-# Standardize Demand and Acceptance Scores
-data_scaled <- data_scaled %>%
-  mutate(StandardizedDemandScore = scale(DemandScore),
-         StandardizedAcceptanceScore = scale(AcceptanceScore))
+# Combine the two plots into one image
+combined_age_plot <- grid.arrange(age_demand_plot, age_acceptance_plot, ncol = 2)
 
-# Plot Demand vs Acceptance with color-coding by age group
-ggplot(data_scaled, aes(x = StandardizedDemandScore, y = StandardizedAcceptanceScore)) +
-  geom_point(aes(color = AgeGroup), alpha = 0.6) +
-  geom_smooth(method = "lm", se = FALSE, color = "red") +
-  labs(x = "Standardized Demand Score", y = "Standardized Acceptance Score",
-       title = "Demand vs Acceptance for AAM") +
-  scale_color_viridis_d() +
+# Calculate mean demand and acceptance scores for each income level
+income_scores <- data_scaled %>%
+  group_by(IncomeLevel) %>%
+  summarise(MeanDemandScore = mean(DemandScore, na.rm = TRUE),
+            MeanAcceptanceScore = mean(AcceptanceScore, na.rm = TRUE))
+
+# Create bar plot for income level vs. demand score
+income_demand_plot <- ggplot(income_scores, aes(x = IncomeLevel, y = MeanDemandScore)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Income Level", y = "Mean Demand Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Create bar plot for income level vs. acceptance score
+income_acceptance_plot <- ggplot(income_scores, aes(x = IncomeLevel, y = MeanAcceptanceScore)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Income Level", y = "Mean Acceptance Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Combine the two plots into one image
+combined_income_plot <- grid.arrange(income_demand_plot, income_acceptance_plot, ncol = 2)
+
+# Calculate mean demand and acceptance scores for each area type
+area_scores <- data_scaled %>%
+  group_by(AreaType) %>%
+  summarise(MeanDemandScore = mean(DemandScore, na.rm = TRUE),
+            MeanAcceptanceScore = mean(AcceptanceScore, na.rm = TRUE))
+
+# Create bar plot for area type vs. demand score
+area_demand_plot <- ggplot(area_scores, aes(x = AreaType, y = MeanDemandScore)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Area Type", y = "Mean Demand Score") +
   theme_minimal()
 
-# Calculate correlation between Demand and Acceptance
-correlation <- cor(data_scaled$StandardizedDemandScore, data_scaled$StandardizedAcceptanceScore)
-print(paste("Correlation between Demand and Acceptance:", correlation))
+# Create bar plot for area type vs. acceptance score
+area_acceptance_plot <- ggplot(area_scores, aes(x = AreaType, y = MeanAcceptanceScore)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Area Type", y = "Mean Acceptance Score") +
+  theme_minimal()
 
-# Regression model to predict Acceptance based on Demand and other factors
-model <- lm(StandardizedAcceptanceScore ~ StandardizedDemandScore + enc_IncomeLevel + enc_AreaType,
-            data = data_scaled)
-summary(model)
+# Combine the two plots into one image
+combined_area_plot <- grid.arrange(area_demand_plot, area_acceptance_plot, ncol = 2)
 
+# Display the combined plots
+print(combined_age_plot)
+print(combined_income_plot)
+print(combined_area_plot)
+
+# Display the summarized tables for each category
+print("Age Group Summary:")
+print(age_scores)
+
+print("Income Level Summary:")
+print(income_scores)
+
+print("Area Type Summary:")
+print(area_scores)
+
+```
+```{r}
+library(ggplot2)
+
+# Create a data frame with encoding categories and values
+encoding_data <- data.frame(
+  category = factor(c("Extremely Unlikely/Uninterested/Unreliable/Unimportant/Uncomfortable", 
+                      "Somewhat Unlikely/Uninterested/Unreliable/Unimportant/Uncomfortable", 
+                      "Neutral", 
+                      "Somewhat Likely/Interested/Reliable/Important/Comfortable", 
+                      "Extremely Likely/Interested/Reliable/Important/Comfortable"),
+                   levels = c("Extremely Unlikely/Uninterested/Unreliable/Unimportant/Uncomfortable", 
+                              "Somewhat Unlikely/Uninterested/Unreliable/Unimportant/Uncomfortable", 
+                              "Neutral", 
+                              "Somewhat Likely/Interested/Reliable/Important/Comfortable", 
+                              "Extremely Likely/Interested/Reliable/Important/Comfortable")),
+  value = c(-2, -1, 0, 1, 2)
+)
+
+# Create the bar chart
+ggplot(encoding_data, aes(x = category, y = value, fill = value)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(x = "", y = "Encoded Value", title = "Encoding Scheme for Categorical Variables") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
